@@ -12,9 +12,7 @@
     "copy:view": "cp -r docs/view/ docs/index.html build/",
     "copy:view:windows": "xcopy docs\\view\\* build\\view\\ /Y && xcopy docs\\index.html build\\ /Y",
     "clean": "rimraf build && mkdir build",
-    "test": "node build/app.js",
-    "prestart": "npm run clean && npm run build:view && npm-run-posix-or-windows copy:client",
-    "start": "tsc-watch --onSuccess \"node build/app.js\""
+    "start": "node build/app.js"
   },
   "config": {
     "commitizen": {
