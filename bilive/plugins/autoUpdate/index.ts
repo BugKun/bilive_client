@@ -91,10 +91,11 @@ class AutoUpdate extends Plugin {
       else {
         tools.Log(`发现新版本 (${branch}@${remoteHash.substr(0,8)}) 10秒后开始更新 可能会重启数次`)
         tools.sendSCMSG(`发现新版本 即将进行自动升级`)
-        await tools.Sleep(10 * 1000)
         await this.execCMD('git merge')
+        await tools.Sleep(10 * 1000)
         tools.Log(`正在后台编译...`)
         await this.execCMD('npm run build')
+        await this.execCMD('pm2 restart bilive_client')
       }
     }
   }
