@@ -14,6 +14,7 @@ class AutoUpdate extends Plugin {
     this.loaded = true
   }
   public async start({}, newUser: boolean) {
+    tools.Log(`这是一个测试`)
     if (!newUser) this._checkForUpdate()
   }
   public async loop({ cstMin, cstHour }: { cstMin: number, cstHour: number }) {
