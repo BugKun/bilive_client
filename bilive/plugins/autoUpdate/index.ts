@@ -7,8 +7,8 @@ class AutoUpdate extends Plugin {
     super()
   }
   public name = '自动更新'
-  public description = '自动更新本地git'
-  public version = '0.0.2'
+  public description = '自动更新本地git，配合pm2可实现自动更新'
+  public version = '0.0.3'
   public author = 'Vector000'
   public async load() {
     this.loaded = true
@@ -91,6 +91,7 @@ class AutoUpdate extends Plugin {
         tools.Log(`发现新版本 (${branch}@${remoteHash.substr(0,8)}) 10秒后开始更新 可能会重启数次`)
         tools.sendSCMSG(`发现新版本 即将进行自动升级`)
         await this.execCMD('git merge')
+        tools.Log(`正在后台编译...`)
         await this.execCMD('npm run build')
       }
     }
