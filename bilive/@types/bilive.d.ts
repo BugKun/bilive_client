@@ -276,9 +276,23 @@ interface beatStormMessage {
   cmd: 'beatStorm'
   roomID: number
   id: number
+  num: number
   type: string
   title: string
   time: number
+}
+/**
+ * 消息格式
+ *
+ * @interface boxMessage
+ */
+interface boxMessage {
+  cmd: 'box'
+  roomID: number
+  id: number
+  title: string
+  round?: number
+  endTime?: number
 }
 /**
  * 消息格式
@@ -417,9 +431,6 @@ interface raffleCheckDataListFromuser {
  * 抽奖lottery检查
  *
  * @interface lotteryCheck
- * 快速抽奖检查
- *
- * @interface lightenCheck
  */
 interface lotteryCheck {
   code: number
@@ -460,6 +471,39 @@ interface lotteryCheckDataSender {
   uid: number
   uname: string
   face: string
+}
+/**
+ * 宝箱抽奖检查
+ *
+ * @interface boxStatus
+ */
+interface boxStatus {
+  code: number
+  msg: string
+  message: string
+  data: boxStatusData
+}
+interface boxStatusData {
+  title: string
+  rule: string
+  typeB: boxStatusTypeB[]
+  current_round: number
+  activity_pic: number
+}
+interface boxStatusTypeB {
+  startTime: string
+  imgUrl: string
+  join_start_time: number
+  join_end_time: number
+  list: boxStatusTypeBList[]
+  status: number
+}
+interface boxStatusTypeBList {
+  jp_id: string
+  jp_name: string
+  jp_num: string
+  jp_type: string
+  ex_text: string
 }
 /*******************
  ***** online ******

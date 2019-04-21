@@ -30,7 +30,7 @@ class AppClient {
   // bilibili 客户端
   private static readonly __secretKey: string = '560c52ccd288fed045859ed18bffd973'
   public static readonly appKey: string = '1d8b6e7d45233436'
-  public static readonly build: string = '5391000'
+  public static readonly build: string = '5400000'
   public static readonly channel: string = 'xiaomi' //此时一位小米用户路过
   public static readonly device: string = 'android'
   public static readonly mobiApp: string = 'android'
@@ -180,7 +180,7 @@ class AppClient {
   public headers: request.Headers = {
     'Connection': 'Keep-Alive',
     'Device-ID': AppClient.DeviceID,
-    'User-Agent': 'Mozilla/5.0 BiliDroid/5.39.1 (bbcallen@gmail.com)'
+    'User-Agent': 'Mozilla/5.0 BiliDroid/5.40.0 (bbcallen@gmail.com)'
   }
   /**
    * cookieJar
@@ -241,7 +241,7 @@ class AppClient {
 &password=${passWord}&platform=${AppClient.platform}&ts=${AppClient.TS}&username=${encodeURIComponent(this.userName)}`
     const auth: request.Options = {
       method: 'POST',
-      uri: 'https://passport.bilibili.com/api/v3/oauth2/login',
+      uri: 'https://passport.bilibili.com/api/v2/oauth2/login',
       body: AppClient.signQuery(authQuery, false),
       jar: this.__jar,
       json: true,

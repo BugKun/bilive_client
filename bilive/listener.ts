@@ -49,6 +49,7 @@ class Listener extends EventEmitter {
   private _raffleID: Set<number> = new Set()
   private _lotteryID: Set<number> = new Set()
   private _beatStormID: Set<number> = new Set()
+  private _boxID: Set<number> = new Set()
   private _MSGCache: Set<string> = new Set()
   /**
    * 抽奖更新时间
@@ -146,6 +147,7 @@ class Listener extends EventEmitter {
         .on('raffle', (raffleMessage: raffleMessage) => this._RaffleHandler(raffleMessage))
         .on('lottery', (lotteryMessage: lotteryMessage) => this._RaffleHandler(lotteryMessage))
         .on('beatStorm', (beatStormMessage: beatStormMessage) => this._RaffleHandler(beatStormMessage))
+        .on('box', (boxMessage: boxMessage) => this._BoxHandler(boxMessage)) 
         .on('sysmsg', (systemMessage: systemMessage) => tools.Log('主服务器消息:', systemMessage.msg))
         .Connect()
       tools.Log(`已连接到 ${Options._.advConfig.serverURL}`)
@@ -167,6 +169,7 @@ class Listener extends EventEmitter {
         .on('raffle', (raffleMessage: raffleMessage) => this._RaffleHandler(raffleMessage))
         .on('lottery', (lotteryMessage: lotteryMessage) => this._RaffleHandler(lotteryMessage))
         .on('beatStorm', (beatStormMessage: beatStormMessage) => this._RaffleHandler(beatStormMessage))
+        .on('box', (boxMessage: boxMessage) => this._BoxHandler(boxMessage))
         .on('sysmsg', (systemMessage: systemMessage) => tools.Log('备用服务器消息:', systemMessage.msg))
         .Connect()
       tools.Log(`已连接到备用服务器 ${Options._.advConfig.bakServerURL}`)
@@ -284,13 +287,38 @@ class Listener extends EventEmitter {
     }
   }
   /**
+   * 监听实物宝箱消息
+   *
+   * @private
+   * @param {boxMessage} boxMessage
+   * @memberof Listener
+   */
+  private async _BoxHandler(boxMessage: boxMessage) {
+    const { id, roomID } = boxMessage
+    const getStatus = await tools.XHR<boxStatus>({
+      uri: `https://api.live.bilibili.com/lottery/v1/Box/getStatus?${AppClient.signQueryBase(`aid:${boxMessage.id}`)}`,
+      json: true
+    }, 'Android')
+    if (getStatus === undefined || getStatus.response.statusCode !== 200 || getStatus.body.code !== 0) return
+    tools.sendSCMSG(JSON.stringify(getStatus.body))
+    const currRound = getStatus.body.data.current_round
+    const currentGift = getStatus.body.data.typeB[currRound + 1]
+    if (currentGift.status !== 0) return
+    let giftStringTmp: string = ''
+    currentGift.list.forEach(gift => giftStringTmp += `${gift.jp_name}*${gift.jp_num} `)
+    boxMessage.round = currRound
+    boxMessage.endTime = currentGift.join_end_time
+    tools.Log(`房间 ${tools.getShortRoomID(roomID)} 开启了第 ${id} 个宝箱抽奖，奖品为${giftStringTmp}`)
+    this._RaffleHandler(boxMessage)
+  }
+  /**
    * 监听抽奖消息
    *
    * @private
-   * @param {raffleMessage | lotteryMessage | beatStormMessage} raffleMessage
+   * @param {raffleMessage | lotteryMessage | beatStormMessage | boxMessage} raffleMessage
    * @memberof Listener
    */
-  private _RaffleHandler(raffleMessage: raffleMessage | lotteryMessage | beatStormMessage) {
+  private _RaffleHandler(raffleMessage: raffleMessage | lotteryMessage | beatStormMessage | boxMessage) {
     const { cmd, id, roomID, title } = raffleMessage
     switch (cmd) {
       case 'smallTV':
@@ -309,12 +337,17 @@ class Listener extends EventEmitter {
         if (this._beatStormID.has(id)) return
         this._beatStormID.add(id)
         break
+      case 'box':
+        if (this._boxID.has(id)) return
+        this._boxID.add(id)
+        break
       default: return
     }
     // 更新时间
     this._lastUpdate = Date.now()
     this.emit(cmd, raffleMessage)
-    tools.Log(`房间 ${tools.getShortRoomID(roomID)} 开启了第 ${id} 轮${title}`)
+    if (cmd !== 'box') tools.Log(`房间 ${tools.getShortRoomID(roomID)} 开启了第 ${id} 轮${title}`)
   }
 }
+
 export default Listener

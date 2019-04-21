@@ -13,7 +13,7 @@ function getHeaders(platform: string): request.Headers {
     case 'Android':
       return {
         'Connection': 'Keep-Alive',
-        'User-Agent': 'Mozilla/5.0 BiliDroid/5.39.1 (bbcallen@gmail.com)'
+        'User-Agent': 'Mozilla/5.0 BiliDroid/5.40.0 (bbcallen@gmail.com)'
       }
     default:
       return {

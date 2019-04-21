@@ -11,10 +11,10 @@ import Options from '../../options'
 class Raffle extends EventEmitter {
   /**
    * 创建一个 Raffle 实例
-   * @param {raffleMessage | lotteryMessage | beatStormMessage} raffleMessage
+   * @param {raffleMessage | lotteryMessage | beatStormMessage | boxMessage} raffleMessage
    * @memberof Raffle
    */
-  constructor(raffleMessage: raffleMessage | lotteryMessage | beatStormMessage, user: User) {
+  constructor(raffleMessage: raffleMessage | lotteryMessage | beatStormMessage | boxMessage, user: User) {
     super()
     this._raffleMessage = raffleMessage
     this._user = user
@@ -26,7 +26,7 @@ class Raffle extends EventEmitter {
    * @type {raffleMessage | lotteryMessage}
    * @memberof Raffle
    */
-  private _raffleMessage: raffleMessage | lotteryMessage | beatStormMessage
+  private _raffleMessage: raffleMessage | lotteryMessage | beatStormMessage | boxMessage
   /**
    * 抽奖用户
    *
@@ -49,15 +49,6 @@ class Raffle extends EventEmitter {
    * @memberof Raffle
    */
   public async Start() {
-    const { roomID } = this._raffleMessage
-    if (this._raffleMessage.cmd !== 'beatStorm') await tools.XHR({
-      method: 'POST',
-      uri: `https://api.live.bilibili.com/room/v1/Room/room_entry_action`,
-      body: `room_id=${roomID}&platform=pc&csrf_token=${tools.getCookie(this._user.jar, 'bili_jct')}`,
-      jar: this._user.jar,
-      json: true,
-      headers: { 'Referer': `https://live.bilibili.com/${tools.getShortRoomID(roomID)}` }
-    })
     switch (this._raffleMessage.cmd) {
       case 'smallTV':
         this._url = 'https://api.live.bilibili.com/gift/v4/smalltv'
@@ -74,6 +65,10 @@ class Raffle extends EventEmitter {
       case 'beatStorm':
         this._url = 'https://api.live.bilibili.com/lottery/v1/Storm'
         this._BeatStorm()
+        break
+      case 'box':
+        this._url = 'https://api.live.bilibili.com/lottery/v1/Box'
+        this._BoxDraw()
         break
       default: break
     }
@@ -95,7 +90,7 @@ class Raffle extends EventEmitter {
    * @memberof Raffle
    */
   private async _RaffleAward() {
-    const { cmd, id, roomID, title, type } = this._raffleMessage
+    const { cmd, id, roomID, title, type } = <raffleMessage>this._raffleMessage
     const reward: requestOptions = {
       method: 'POST',
       uri: `${this._url}/getAward`,
@@ -135,7 +130,7 @@ class Raffle extends EventEmitter {
    * @memberof Raffle
    */
   private async _Lottery() {
-    const { id, roomID, title, type } = this._raffleMessage
+    const { id, roomID, title, type } = <lotteryMessage>this._raffleMessage
     const reward: requestOptions = {
       method: 'POST',
       uri: `${this._url}/join`,
@@ -181,8 +176,11 @@ class Raffle extends EventEmitter {
       json: true,
       headers: this._user.headers
     }
+    let num: number = 1
+    if ((<beatStormMessage>this._raffleMessage).num !== undefined)
+      num = (<beatStormMessage>this._raffleMessage).num
     if (<number[]>Options._.advConfig.stormSetting === undefined) return
-    for (let i = 1; i <= (<number[]>Options._.advConfig.stormSetting)[1]; i++) {
+    for (let i = 1; i <= (<number[]>Options._.advConfig.stormSetting)[1] * num; i++) {
       let joinStorm = await tools.XHR<joinStorm>(join, 'Android')
       if (joinStorm === undefined) break
       if (joinStorm.response.statusCode !== 200) {
@@ -206,6 +204,49 @@ class Raffle extends EventEmitter {
       if (joinStorm.body.msg === '你错过了奖励，下次要更快一点哦~') this.emit('msg', { cmd: 'unban', data: { uid: this._user.uid, type: 'beatStorm', nickname: this._user.nickname } })
       await tools.Sleep((<number[]>Options._.advConfig.stormSetting)[0])
     }
+  }
+  /**
+   * 参与实物宝箱抽奖
+   *
+   * @private
+   * @memberof Raffle
+   */
+  private async _BoxDraw() {
+    const { id, round, title } = <boxMessage>this._raffleMessage
+    const draw: requestOptions = {
+      uri: `${this._url}/draw?${AppClient.signQueryBase(`${this._user.tokenQuery}&aid=${id}&number=${round}`)}`,
+      json: true,
+      headers: this._user.headers
+    }
+    tools.XHR<boxDraw>(draw, 'Android').then(drawResult => {
+      if (drawResult !== undefined && drawResult.response.statusCode === 200) {
+		tools.sendSCMSG(JSON.stringify(drawResult.body))
+        if (drawResult.body.code === 0) this._BoxAward()
+        else tools.Log(this._user.nickname, title, id, drawResult.body)
+      }
+    })
+  }
+  /**
+   * 实物宝箱
+   *
+   * @private
+   * @memberof Raffle
+   */
+  private async _BoxAward() {
+    const { id, round, title, endTime } = <boxMessage>this._raffleMessage
+    await tools.Sleep(<number>endTime * 1e3 - Date.now())
+    const getReward: requestOptions = {
+      uri: `${this._url}/getDrawRewardByType?${AppClient.signQueryBase(`${this._user.tokenQuery}&aid=${id}&number=${round}`)}`,
+      json: true,
+      headers: this._user.headers
+    }
+    tools.XHR<boxReward>(getReward, 'Android').then(reward => {
+      if (reward !== undefined && reward.response.statusCode === 200) {
+		 tools.sendSCMSG(JSON.stringify(reward.body))
+        if (reward.body.code === 0) tools.Log(this._user.nickname, title, id, reward.body.msg)
+        else tools.Log(this._user.nickname, title, id, reward.body.msg)
+      }
+    })
   }
 }
 
@@ -279,5 +320,17 @@ interface joinStormData {
   gift_img: string
   gift_num: number
   gift_name: string
+}
+interface boxDraw {
+  code: number
+  msg: string
+  message: string
+  data: any[]
+}
+interface boxReward {
+  code: number
+  msg: string
+  message: string
+  data: any[]
 }
 export default Raffle

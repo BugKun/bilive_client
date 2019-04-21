@@ -125,6 +125,14 @@ class Raffle extends Plugin {
       type: 'number'
     }
     whiteList.add('beatStormPriority')
+    // 实物抽奖
+    defaultOptions.newUserData['box'] = false
+    defaultOptions.info['box'] = {
+      description: '宝箱抽奖',
+      tip: '自动参与宝箱抽奖',
+      type: 'boolean'
+    }
+    whiteList.add('box')
     // beatStorm领取量
     defaultOptions.newUserData['beatStormTaken'] = 0
     whiteList.add('beatStormTaken')
@@ -203,7 +211,7 @@ class Raffle extends Plugin {
     options.advConfig['beatStormRefresh'] = Date.now()
     Options.save()
   }
-  public async msg({ message, options, users }: { message: raffleMessage | lotteryMessage | beatStormMessage, options: options, users: Map<string, User> }) {
+  public async msg({ message, options, users }: { message: raffleMessage | lotteryMessage | beatStormMessage | boxMessage, options: options, users: Map<string, User> }) {
     if (this._raffle) {
       if (message.cmd === 'beatStorm') this._doStorm({message, options, users})
       else {
@@ -219,7 +227,7 @@ class Raffle extends Plugin {
    * @param {message, options, users}
    * @private
    */
-  private async _doRaffle({ message, options, users }: { message: raffleMessage | lotteryMessage, options: options, users: Map<string, User> }) {
+  private async _doRaffle({ message, options, users }: { message: raffleMessage | lotteryMessage | boxMessage, options: options, users: Map<string, User> }) {
     const delay = <number>options.advConfig['raffleDelay']
     if (delay !== 0) await tools.Sleep(delay)
     for (let [uid, user] of users) {
