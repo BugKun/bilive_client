@@ -115,17 +115,19 @@ class GetStatus extends Plugin {
     if (data.type === 'raffle') {
       if (!this._raffleBanList.get(data.uid)) {
         this._raffleBanList.set(data.uid, true)
-        tools.Log(`${data.nickname}已封禁`)
-        tools.sendSCMSG(`${data.nickname}已封禁`)
         user.userData['raffleBan'] = true
+        tools.Log(`${data.nickname}已封禁`)
+        await tools.Sleep(Math.random() * 5 * 1000)
+        tools.sendSCMSG(`${data.nickname}已封禁`)
       }
     }
     else {
       if (!this._stormBanList.get(data.uid)) {
         this._stormBanList.set(data.uid, true)
-        tools.Log(`${data.nickname}风暴已封禁`)
-        tools.sendSCMSG(`${data.nickname}风暴已封禁`)
         user.userData['beatStormBan'] = true
+        tools.Log(`${data.nickname}风暴已封禁`)
+        await tools.Sleep(Math.random() * 5 * 1000)
+        tools.sendSCMSG(`${data.nickname}风暴已封禁`)
       }
     }
     Options.save()
@@ -141,17 +143,19 @@ class GetStatus extends Plugin {
     if (data.type !== 'beatStorm') {
       if (this._raffleBanList.get(data.uid)) {
         this._raffleBanList.set(data.uid, false)
-        tools.Log(`${data.nickname}已解除封禁`)
-        tools.sendSCMSG(`${data.nickname}已解除封禁`)
         user.userData['raffleBan'] = false
+        tools.Log(`${data.nickname}已解除封禁`)
+        await tools.Sleep(Math.random() * 5 * 1000)
+        tools.sendSCMSG(`${data.nickname}已解除封禁`)
       }
     }
     else {
       if (this._stormBanList.get(data.uid)) {
         this._stormBanList.set(data.uid, false)
-        tools.Log(`${data.nickname}已解除风暴封禁`)
-        tools.sendSCMSG(`${data.nickname}已解除风暴封禁`)
         user.userData['beatStormBan'] = false
+        tools.Log(`${data.nickname}已解除风暴封禁`)
+        await tools.Sleep(Math.random() * 5 * 1000)
+        tools.sendSCMSG(`${data.nickname}已解除风暴封禁`)
       }
     }
     Options.save()

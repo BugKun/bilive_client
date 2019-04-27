@@ -88,13 +88,14 @@ class AutoUpdate extends Plugin {
       if (remoteHash === undefined) return tools.ErrorLog(`获取最新版本信息失败`)
       if (localHash === remoteHash) tools.Log(`当前版本 (${branch}@${localHash.substr(0,8)}) 已是最新版本`)
       else {
-        tools.Log(`发现新版本 (${branch}@${remoteHash.substr(0,8)}) 10秒后开始更新 可能会重启数次`)
+        tools.Log(`发现新版本 (${branch}@${remoteHash.substr(0,8)}) 10秒后开始更新`)
         tools.sendSCMSG(`发现新版本 即将进行自动升级`)
         await this.execCMD('git merge')
         await tools.Sleep(10 * 1000)
         tools.Log(`正在后台编译...`)
         await this.execCMD('npm run build')
-        await this.execCMD('pm2 restart bilive_client')
+        let pm2 = await this.execCMD('pm2 restart bilive_client')
+        if (pm2 === undefined) tools.Log(`PM2执行错误，无法进行自动更新，请手动更新并检查是否正确安装PM2`)
       }
     }
   }
