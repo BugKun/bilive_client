@@ -64,6 +64,7 @@ class Options extends EventEmitter {
     'hostname',
     'port',
     'protocol',
+    'netkey',
     'config',
     'advConfig',
     'localListener',
